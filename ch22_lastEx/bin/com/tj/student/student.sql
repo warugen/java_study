@@ -1,0 +1,192 @@
+DROP TABLE STUDENT;
+DROP TABLE MAJOR;
+
+CREATE TABLE MAJOR (
+    mNO     NUMBER(1,0)     PRIMARY KEY,
+    mNAME   VARCHAR2(50)    UNIQUE );
+    
+INSERT INTO MAJOR VALUES (1, '컴퓨터공학');
+INSERT INTO MAJOR VALUES (2, '경영정보학');
+INSERT INTO MAJOR VALUES (3, '산업디자인');
+INSERT INTO MAJOR VALUES (4, '정보전자학');
+INSERT INTO MAJOR VALUES (5, '연극영화학');
+
+SELECT * FROM MAJOR;
+
+DROP SEQUENCE STD_SEQ;
+CREATE SEQUENCE STD_SEQ
+  INCREMENT BY 1 
+  MAXVALUE 999 
+  NOCYCLE
+  NOCACHE;
+  
+CREATE TABLE STUDENT (
+    sNO     VARCHAR2(10)    PRIMARY KEY,
+    sNAME   VARCHAR2(50) ,
+    mNO     NUMBER(1,0)     REFERENCES MAJOR(mNO),
+    SCORE   NUMBER(3,0)     DEFAULT 0 CHECK(SCORE>=0 AND SCORE <=100),
+    sEXPEL  NUMBER(1,0)     DEFAULT 0 CHECK(sEXPEL = 0 OR sEXPEL =1)
+);
+
+-- 1을 누르면 학생 입력
+-- 이름, 전공명, 점수를 입력받아 
+-- 학번은 시퀀스를 이용하여 "현재년도||학과번호||순차번호"로 입력한다.
+
+SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학';
+
+SELECT TO_CHAR(SYSDATE,'YYYY') FROM DUAL;
+
+SELECT TRIM(TO_CHAR(STD_SEQ.nextval,'000')) FROM DUAL;
+
+SELECT TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')) FROM DUAL;
+
+
+INSERT INTO STUDENT VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '정우성',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학'),
+    90,
+    0 );
+
+INSERT INTO STUDENT VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '박세영',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학'),
+    80,
+    0);
+
+INSERT INTO STUDENT VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '산업디자인') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '배수지',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '산업디자인'),
+    20,
+    0 );
+
+INSERT INTO STUDENT VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '컴퓨터공학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '홍길동',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '정보전자학'),
+    95,
+    0 );
+
+INSERT INTO STUDENT VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '연극영화학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '송혜교',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '연극영화학'),
+    100,
+    0 );
+
+SELECT * FROM STUDENT;
+
+--  2를 누르면 원하는 학과이름을 입력받아
+--  학과별 조회후 총점을 추가하여 총점이 높은 순으로 이름(번호)로 출력
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME, SCORE
+FROM (SELECT * FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND mNAME = '컴퓨터공학' ORDER BY SCORE DESC);
+
+
+
+-- 3을 누르면 제적당하지 않은 전체 학생을 조회 후 점수가 높은 순으로 아래와 같이 출력한다
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME, SCORE
+FROM (SELECT * FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND sEXPEL = 0 ORDER BY SCORE DESC);
+
+
+COMMIT;
+
+-----------------------------------------------------------------------------------------------------
+-- 학생관리GUI버전 SQL쿼리
+-----------------------------------------------------------------------------------------------------
+
+-- 콤보박스에 전공추가 (MNAME)
+SELECT MNAME FROM MAJOR;
+
+-- 학번검색 (SNO, SNAME, MNAME, SOCRE)
+SELECT * 
+FROM STUDENT S, MAJOR M
+WHERE S.MNO = M.MNO AND SNO = '20205005';
+
+-- 이름검색 (SNO, SNAME, MNAME, SOCRE)
+SELECT * 
+FROM STUDENT S, MAJOR M
+WHERE S.MNO = M.MNO AND SNAME = '홍길동';
+
+-- 전공검색(RANK, NAME_NO, MNAME, SOCRE) 출력형식-> 1 송혜교(20205005) 연극영화학(5) 100
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME||'('||MNO||')' MNAME_NO , SCORE
+FROM (SELECT SNO, SNAME, MNAME, S.MNO, SCORE FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND mNAME = '연극영화학' ORDER BY SCORE DESC);
+
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME||'('||MNO||')' MNAME_NO , SCORE
+FROM (SELECT S.*, MNAME FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND mNAME = '연극영화학' ORDER BY SCORE DESC);
+
+-- 학생입력 (INSERT)
+INSERT INTO STUDENT (SNO, SNAME, MNO, SCORE) VALUES (
+    TO_CHAR(SYSDATE,'YYYY') || (SELECT mNO FROM MAJOR WHERE mNAME = '연극영화학') || TRIM(TO_CHAR(STD_SEQ.nextval,'000')),
+    '한예슬',
+    (SELECT mNO FROM MAJOR WHERE mNAME = '연극영화학'),
+    85);
+    
+SELECT * FROM STUDENT;
+
+-- 학생수정 (UPDATE)
+UPDATE STUDENT SET  SNAME = '박세형', 
+                    MNO = (SELECT MNO FROM MAJOR WHERE MNAME = '경영정보학'), 
+                    SCORE = 70
+WHERE SNO = '20201002';
+
+-- 학생출력 (RANK, NAME_NO, MNAME, SCORE) 출력형식-> 1 송혜교(20205005) 연극영화학(5) 100
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME||'('||MNO||')' MNAME_NO , SCORE
+FROM (SELECT S.*, MNAME FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND SEXPEL = 0 ORDER BY SCORE DESC);
+
+-- 제적자출력 (RANK, NAME_NO, MNAME, SCORE) 출력형식-> 1 송혜교(20205005) 연극영화학(5) 100
+SELECT ROWNUM RANK, sNAME||'('||sNO||')' NAME_NO, mNAME||'('||MNO||')' MNAME_NO , SCORE
+FROM (SELECT S.*, MNAME FROM STUDENT S, MAJOR M WHERE S.mNO = M.mNO AND SEXPEL = 1 ORDER BY SCORE DESC);
+
+-- 제적처리 (UPDATE)
+UPDATE STUDENT SET SEXPEL = 1 WHERE SNO = '201001';
+UPDATE STUDENT SET SEXPEL = 0 WHERE SNO = '20201001'; 
+
+COMMIT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

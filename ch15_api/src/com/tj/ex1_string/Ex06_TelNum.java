@@ -1,0 +1,27 @@
+package com.tj.ex1_string;
+
+import java.util.Scanner;
+
+public class Ex06_TelNum {
+	public static void main(String[] args) {
+		String[] tels = {"010-9999-9999","010-8888-8888","02-908-1211", "010-8765-9999", "02-909-9999"};
+		Scanner sc = new Scanner(System.in);
+		System.out.print("검색하고자하는 회원의 전화번호 뒷자리는? ");
+		String src = sc.next();
+		int idx;
+		boolean fndOK = false;
+		
+		for (idx=0; idx < tels.length; idx++) {
+			// 전화번호 뒷자리 빼내기
+			String tmp = tels[idx].substring(tels[idx].lastIndexOf('-')+1);
+			if ( tmp.equals(src)) {
+				System.out.println(tels[idx]);
+				fndOK = true;
+			}
+		}
+		
+		if (!fndOK) {
+			System.out.println("전화번호를 찿지 못했습니다.");
+		}
+	}
+}
